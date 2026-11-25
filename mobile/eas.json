@@ -11,7 +11,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://your-render-app.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://landconnect-zqhr.onrender.com/"
       }
     },
     "preview": {
@@ -20,7 +20,7 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://your-render-app.onrender.com"
+        "EXPO_PUBLIC_API_URL": "https://landconnect-zqhr.onrender.com/"
       }
     }
   }

@@ -7,7 +7,9 @@
     "icon": "./assets/images/icon.png",
     "scheme": "landconnect",
     "userInterfaceStyle": "light",
-    "platforms": ["android"],
+    "platforms": [
+      "android"
+    ],
     "android": {
       "package": "com.landconnect.app",
       "adaptiveIcon": {
@@ -21,7 +23,13 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.BLUETOOTH_CONNECT",
         "android.permission.MODIFY_AUDIO_SETTINGS",
-        "android.permission.VIBRATE"
+        "android.permission.VIBRATE",
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.WAKE_LOCK",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.INTERNET",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ],
       "predictiveBackGestureEnabled": false
     },
@@ -56,6 +64,16 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "a7e0e4c8-00a3-4b09-bab9-c5d6f15ecad2"
+      }
     }
   }
 }
