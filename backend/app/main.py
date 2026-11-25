@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from app import models  # noqa: F401
 from app.db import init_db
-from app.routers import auth, calls, users
+from app.routers import auth, calls, images, listings, users
 
 
 @asynccontextmanager
@@ -17,6 +17,8 @@ app = FastAPI(title="LandConnect API", lifespan=lifespan)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(calls.router)
+app.include_router(listings.router)
+app.include_router(images.router)
 
 
 @app.get("/health")
