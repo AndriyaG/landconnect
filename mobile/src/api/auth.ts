@@ -12,3 +12,8 @@ export async function register(name: string, email: string, password: string, ro
   const { data } = await api.post<TokenOut>("/auth/register", { name, email, password, role });
   return { token: data.access_token, user: data.user };
 }
+
+export async function fetchMe(): Promise<PublicUser> {
+  const { data } = await api.get<PublicUser>("/me");
+  return { id: data.id, name: data.name, role: data.role };
+}
