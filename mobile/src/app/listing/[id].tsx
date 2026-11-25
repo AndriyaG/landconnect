@@ -66,7 +66,7 @@ export default function ListingDetailScreen() {
           <OwnerCard owner={listing.owner} />
         </View>
       </ScrollView>
-      {me?.id !== listing.owner.id && <ContactBar owner={listing.owner} />}
+      {me?.id !== listing.owner.id && <ContactBar owner={listing.owner} listingId={listing.id} />}
     </Screen>
   );
 }

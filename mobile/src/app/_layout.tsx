@@ -36,6 +36,8 @@ export default function RootLayout() {
             <Stack.Protected guard={hydrated && !!token}>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="listing/[id]" />
+              <Stack.Screen name="chat/[id]" />
+              <Stack.Screen name="meeting-new" />
               <Stack.Protected guard={canList(user)}>
                 <Stack.Screen name="my-listings" />
                 <Stack.Screen name="listing-form" />

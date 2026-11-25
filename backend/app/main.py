@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from app import models  # noqa: F401
 from app.db import init_db
-from app.routers import auth, blocks, calls, conversations, images, listings, users, ws
+from app.routers import auth, blocks, calls, conversations, images, listings, meetings, users, ws
 
 
 @asynccontextmanager
@@ -21,6 +21,7 @@ app.include_router(listings.router)
 app.include_router(images.router)
 app.include_router(conversations.router)
 app.include_router(blocks.router)
+app.include_router(meetings.router)
 app.include_router(ws.router)
 
 
