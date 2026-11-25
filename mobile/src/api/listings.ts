@@ -30,6 +30,13 @@ export async function fetchListings(filters: ListingFilters, offset: number): Pr
   return data;
 }
 
+export const MAP_LIMIT = 100;
+
+export async function fetchListingsInBbox(bbox: string): Promise<Listing[]> {
+  const { data } = await api.get<Listing[]>("/listings", { params: { bbox, limit: MAP_LIMIT } });
+  return data;
+}
+
 export async function fetchListing(id: number): Promise<Listing> {
   const { data } = await api.get<Listing>(`/listings/${id}`);
   return data;

@@ -2,12 +2,10 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Location from "expo-location";
 import { useRef, useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from "react-native";
-import { WebView, type WebViewMessageEvent } from "react-native-webview";
 
-import { API_URL } from "@/api/client";
+import { INDIA, type LatLng } from "@/map/leafletHtml";
+import { LeafletMap, type LeafletMapHandle, type MapMessage } from "@/map/LeafletMap";
 import { colors } from "@/theme";
-
-import { locationPickerHtml, type LatLng } from "./locationPickerHtml";
 
 export type { LatLng };
 
@@ -19,18 +17,15 @@ type Props = {
 };
 
 export function LocationPicker({ value, onChange, onTouchActive, height = 260 }: Props) {
-  const webRef = useRef<WebView<object>>(null);
-  const [html] = useState(() => locationPickerHtml(value, colors.primary));
+  const mapRef = useRef<LeafletMapHandle>(null);
+  const [initial] = useState(value);
   const [locating, setLocating] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
-  const onMessage = (e: WebViewMessageEvent) => {
-    const msg = JSON.parse(e.nativeEvent.data);
+  const onMessage = (msg: MapMessage) => {
     if (msg.type === "pick") {
       setMessage(null);
       onChange({ lat: msg.lat, lng: msg.lng });
-    } else if (msg.type === "error") {
-      setMessage("Map failed to load. Check your internet connection.");
     }
   };
 
@@ -49,7 +44,7 @@ export function LocationPicker({ value, onChange, onTouchActive, height = 260 }:
       }
       const { coords } = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const next = { lat: coords.latitude, lng: coords.longitude };
-      webRef.current?.injectJavaScript(`window.setPosition(${next.lat}, ${next.lng}); true;`);
+      mapRef.current?.call("setPosition", next.lat, next.lng);
       onChange(next);
     } catch {
       setMessage("Couldn't get your location. Try again or tap the map.");
@@ -67,15 +62,10 @@ export function LocationPicker({ value, onChange, onTouchActive, height = 260 }:
         onTouchEnd={() => onTouchActive?.(false)}
         onTouchCancel={() => onTouchActive?.(false)}
       >
-        <WebView<object>
-          ref={webRef}
-          source={{ html, baseUrl: API_URL ?? "" }}
-          originWhitelist={["*"]}
+        <LeafletMap
+          ref={mapRef}
+          options={{ mode: "pick", center: initial ?? INDIA, zoom: initial ? 15 : 5, pin: initial }}
           onMessage={onMessage}
-          onError={() => setMessage("Map failed to load. Check your internet connection.")}
-          nestedScrollEnabled
-          startInLoadingState
-          renderLoading={() => <ActivityIndicator style={StyleSheet.absoluteFill} color={colors.primary} />}
         />
       </View>
       <View style={styles.row}>
@@ -101,7 +91,7 @@ export function LocationPicker({ value, onChange, onTouchActive, height = 260 }:
 
 const styles = StyleSheet.create({
   root: { gap: 8 },
-  map: { borderRadius: 12, overflow: "hidden", borderWidth: 1, borderColor: colors.border, backgroundColor: colors.border },
+  map: { borderRadius: 12, overflow: "hidden", borderWidth: 1, borderColor: colors.border },
   row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   coords: { flex: 1, color: colors.muted, fontSize: 13 },
   button: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 18, borderWidth: 1, borderColor: colors.primary, minHeight: 40 },

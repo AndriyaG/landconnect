@@ -10,6 +10,7 @@ import { formatArea, formatINR } from "@/listings/format";
 import { ImageCarousel } from "@/listings/ImageCarousel";
 import { OwnerCard } from "@/listings/OwnerCard";
 import { StateView } from "@/listings/StateView";
+import { MiniMap } from "@/map/MiniMap";
 import { useAuth } from "@/store/auth";
 import { colors, Screen } from "@/theme";
 
@@ -56,6 +57,7 @@ export default function ListingDetailScreen() {
             <Ionicons name="location-outline" size={18} color={colors.primary} />
             <Text style={styles.body}>{listing.address || `${listing.lat.toFixed(4)}, ${listing.lng.toFixed(4)}`}</Text>
           </View>
+          <MiniMap point={{ lat: listing.lat, lng: listing.lng }} />
 
           <Text style={styles.section}>Description</Text>
           <Text style={styles.body}>{listing.description || "No description provided."}</Text>
