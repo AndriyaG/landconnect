@@ -1,8 +1,7 @@
-from typing import Literal
+from pydantic import BaseModel, EmailStr, Field
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
-
-Role = Literal["buyer", "seller", "broker"]
+from app.models import Role
+from app.schemas.user import PublicUser
 
 
 class RegisterIn(BaseModel):
@@ -17,21 +16,7 @@ class LoginIn(BaseModel):
     password: str
 
 
-class PublicUser(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: int
-    name: str
-    role: Role
-
-
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: PublicUser
-
-
-class CallTokenOut(BaseModel):
-    api_key: str
-    user_id: str
-    token: str

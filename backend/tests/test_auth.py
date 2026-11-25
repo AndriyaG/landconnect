@@ -1,3 +1,7 @@
+from datetime import datetime, timedelta, timezone
+
+import jwt
+
 from tests.conftest import register
 
 
@@ -16,7 +20,7 @@ def test_register_returns_token_and_public_user(client):
 def test_register_hides_email_and_password(client):
     text = register(client).text
     assert "a@example.com" not in text
-    assert "password" not in text.replace("password_hash", "")
+    assert "password" not in text
 
 
 def test_register_duplicate_email_case_insensitive(client):
@@ -28,6 +32,11 @@ def test_register_rejects_admin_role(client):
     assert register(client, role="admin").status_code == 422
 
 
+def test_register_accepts_each_allowed_role(client):
+    for i, role in enumerate(["buyer", "seller", "broker"]):
+        assert register(client, email=f"u{i}@example.com", role=role).status_code == 201
+
+
 def test_register_rejects_short_password(client):
     assert register(client, password="short").status_code == 422
 
@@ -37,6 +46,17 @@ def test_login_success(client):
     r = client.post("/auth/login", json={"email": "a@example.com", "password": "password123"})
     assert r.status_code == 200
     assert r.json()["user"]["name"] == "Alice"
+    assert "a@example.com" not in r.text
+
+
+def test_login_token_expires_in_7_days(client):
+    register(client)
+    token = client.post("/auth/login", json={"email": "a@example.com", "password": "password123"}).json()[
+        "access_token"
+    ]
+    exp = jwt.decode(token, options={"verify_signature": False})["exp"]
+    remaining = datetime.fromtimestamp(exp, timezone.utc) - datetime.now(timezone.utc)
+    assert timedelta(days=6, hours=23) < remaining <= timedelta(days=7)
 
 
 def test_login_wrong_password(client):

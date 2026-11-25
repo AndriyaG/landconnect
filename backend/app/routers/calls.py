@@ -1,8 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.deps import get_current_user
 from app.models import User
-from app.schemas import CallTokenOut
-from app.security import get_current_user
+from app.schemas.call import CallTokenOut
 from app.services import call_service
 
 router = APIRouter(prefix="/calls", tags=["calls"])
