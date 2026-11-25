@@ -80,8 +80,11 @@ def join_meeting(
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Meeting not found")
     if db.get(MeetingParticipant, (meeting.id, user.id)) is None:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Not a participant of this meeting")
+    members = _participants(db, meeting.id)
     try:
-        call_service.upsert_user(user)
+        for member in members:
+            call_service.upsert_user(member)
+        call_service.open_meeting_call(meeting.call_id, meeting.host_id, [member.id for member in members])
         token = call_service.create_user_token(user)
     except Exception:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, "Call service unavailable")

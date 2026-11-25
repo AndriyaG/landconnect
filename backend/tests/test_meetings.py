@@ -30,7 +30,7 @@ def test_non_participant_cannot_join_meeting(client, stream_calls):
     assert joined.status_code == 200
     assert joined.json()["call_id"] == meeting["call_id"]
     assert joined.json()["user_id"] == str(guest_id)
-    assert stream_calls == [str(guest_id)]
+    assert set(stream_calls) == {str(guest_id), str(host_id)}
 
     mine = client.get("/meetings", headers=auth(host)).json()
     assert [m["id"] for m in mine] == [meeting["id"]]

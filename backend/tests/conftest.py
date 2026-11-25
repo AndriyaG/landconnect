@@ -27,6 +27,8 @@ def stream_calls(monkeypatch):
     upserted: list[str] = []
     monkeypatch.setattr(call_service, "upsert_user", lambda u: upserted.append(call_service.stream_user_id(u)))
     monkeypatch.setattr(call_service, "create_user_token", lambda u: f"stream-token-{u.id}")
+    monkeypatch.setattr(call_service, "open_meeting_call", lambda *_a, **_k: None)
+    monkeypatch.setattr(call_service, "create_ringing_call", lambda *_a, **_k: None)
     return upserted
 
 
