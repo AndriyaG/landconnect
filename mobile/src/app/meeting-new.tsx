@@ -13,6 +13,12 @@ import { StateView } from "@/listings/StateView";
 import type { PublicUser } from "@/store/auth";
 import { colors, Screen } from "@/theme";
 
+function meetingError(e: unknown) {
+  const raw = errorMessage(e);
+  if (raw === "blocked") return "You can't invite someone you've blocked, or who blocked you.";
+  return raw;
+}
+
 function scheduledIso(date: string, time: string) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}$/.test(time)) return null;
   const value = new Date(`${date}T${time}:00`);
@@ -47,7 +53,7 @@ export default function NewMeetingScreen() {
       await queryClient.invalidateQueries({ queryKey: ["meetings"] });
       router.back();
     } catch (e) {
-      Alert.alert("Couldn't create meeting", errorMessage(e));
+      Alert.alert("Couldn't create meeting", meetingError(e));
     } finally {
       setBusy(false);
     }

@@ -7,6 +7,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { errorMessage } from "@/api/client";
 import { createConversation } from "@/api/chat";
+import { useCallClient } from "@/calls/CallProvider";
+import { placeCall } from "@/calls/media";
+import type { CallKind } from "@/calls/api";
 import type { PublicUser } from "@/store/auth";
 import { colors } from "@/theme";
 
@@ -21,7 +24,9 @@ const ACTIONS: Action[] = [
 export function ContactBar({ owner, listingId }: { owner: PublicUser; listingId: number }) {
   const { bottom } = useSafeAreaInsets();
   const queryClient = useQueryClient();
+  const { client } = useCallClient();
   const [messaging, setMessaging] = useState(false);
+  const [calling, setCalling] = useState(false);
 
   const message = async () => {
     setMessaging(true);
@@ -36,21 +41,38 @@ export function ContactBar({ owner, listingId }: { owner: PublicUser; listingId:
     }
   };
 
+  const call = async (type: CallKind) => {
+    if (!client) {
+      Alert.alert("Call", "Still connecting to the call service. Try again in a moment.");
+      return;
+    }
+    setCalling(true);
+    try {
+      await placeCall(client, owner.id, type);
+    } catch (e) {
+      Alert.alert(type === "video" ? "Video call" : "Audio call", errorMessage(e));
+    } finally {
+      setCalling(false);
+    }
+  };
+
   return (
     <View style={[styles.bar, { paddingBottom: bottom + 10 }]}>
       {ACTIONS.map((a) => {
         const isMessage = a.label === "Message";
+        const type: CallKind | null = a.label === "Audio call" ? "audio" : a.label === "Video call" ? "video" : null;
+        const busy = (isMessage && messaging) || (type !== null && calling);
         return (
           <Pressable
             key={a.label}
             accessibilityRole="button"
             accessibilityLabel={`${a.label} ${owner.name}`}
-            accessibilityState={{ disabled: isMessage && messaging, busy: isMessage && messaging }}
-            disabled={isMessage && messaging}
-            onPress={() => (isMessage ? message() : Alert.alert(a.label, `${a.label} with ${owner.name} is coming soon.`))}
+            accessibilityState={{ disabled: busy, busy }}
+            disabled={busy}
+            onPress={() => (isMessage ? message() : type && call(type))}
             style={({ pressed }) => [styles.button, pressed && { opacity: 0.7 }]}
           >
-            {isMessage && messaging ? <ActivityIndicator color="#fff" /> : <Ionicons name={a.icon} size={20} color="#fff" />}
+            {busy ? <ActivityIndicator color="#fff" /> : <Ionicons name={a.icon} size={20} color="#fff" />}
             <Text style={styles.label}>{a.label}</Text>
           </Pressable>
         );

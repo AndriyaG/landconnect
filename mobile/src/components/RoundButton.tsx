@@ -6,16 +6,20 @@ type Props = {
   onPress: () => void;
   color: string;
   disabled?: boolean;
+  size?: number;
 };
 
-export function RoundButton({ label, accessibilityLabel, onPress, color, disabled }: Props) {
+export function RoundButton({ label, accessibilityLabel, onPress, color, disabled, size = 72 }: Props) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
       disabled={disabled}
-      style={({ pressed }) => [styles.button, { backgroundColor: color, opacity: disabled ? 0.5 : pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [
+        styles.button,
+        { backgroundColor: color, width: size, height: size, borderRadius: size / 2, opacity: disabled ? 0.5 : pressed ? 0.7 : 1 },
+      ]}
     >
       <Text style={styles.label}>{label}</Text>
     </Pressable>
@@ -23,6 +27,6 @@ export function RoundButton({ label, accessibilityLabel, onPress, color, disable
 }
 
 const styles = StyleSheet.create({
-  button: { width: 72, height: 72, borderRadius: 36, alignItems: "center", justifyContent: "center" },
+  button: { alignItems: "center", justifyContent: "center", padding: 4 },
   label: { color: "#fff", fontWeight: "600", fontSize: 13, textAlign: "center" },
 });

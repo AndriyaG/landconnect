@@ -55,6 +55,15 @@ export async function blockUser(userId: number): Promise<PublicUser> {
   return data;
 }
 
+export async function fetchBlocks(): Promise<PublicUser[]> {
+  const { data } = await api.get<PublicUser[]>("/blocks");
+  return data;
+}
+
+export async function unblockUser(userId: number): Promise<void> {
+  await api.delete(`/blocks/${userId}`);
+}
+
 export const MESSAGE_PAGE = PAGE;
 
 function compareMessages(a: LocalMessage, b: LocalMessage) {

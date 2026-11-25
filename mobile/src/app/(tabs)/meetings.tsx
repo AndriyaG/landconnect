@@ -1,16 +1,21 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
+import { useState } from "react";
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from "react-native";
 
 import { errorMessage } from "@/api/client";
 import { fetchMeetings, type Meeting } from "@/api/meetings";
+import { useCallClient } from "@/calls/CallProvider";
+import { joinMeetingCall } from "@/calls/media";
+import type { StreamVideoClient } from "@stream-io/video-react-native-sdk";
 import { StateView } from "@/listings/StateView";
 import { useAuth } from "@/store/auth";
 import { colors, Header } from "@/theme";
 
 export default function MeetingsScreen() {
   const me = useAuth((s) => s.user);
+  const { client } = useCallClient();
   const query = useQuery({ queryKey: ["meetings"], queryFn: fetchMeetings });
 
   return (
@@ -39,16 +44,31 @@ export default function MeetingsScreen() {
           refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => { void query.refetch(); }} tintColor={colors.primary} />}
           contentContainerStyle={query.data.length === 0 ? styles.empty : styles.list}
           ListEmptyComponent={<StateView icon="videocam-outline" title="No meetings yet" text="Create one and invite people you already chat with." />}
-          renderItem={({ item }) => <MeetingRow meeting={item} meId={me?.id} />}
+          renderItem={({ item }) => <MeetingRow meeting={item} meId={me?.id} client={client} />}
         />
       )}
     </View>
   );
 }
 
-function MeetingRow({ meeting, meId }: { meeting: Meeting; meId?: number }) {
+function MeetingRow({ meeting, meId, client }: { meeting: Meeting; meId?: number; client: StreamVideoClient | null }) {
+  const [joining, setJoining] = useState(false);
   const when = new Date(meeting.scheduled_at).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
   const names = meeting.participants.filter((p) => p.id !== meId).map((p) => p.name);
+  const join = async () => {
+    if (!client) {
+      Alert.alert("Join", "Still connecting to the call service. Try again in a moment.");
+      return;
+    }
+    setJoining(true);
+    try {
+      await joinMeetingCall(client, meeting.id);
+    } catch (e) {
+      Alert.alert("Join", errorMessage(e));
+    } finally {
+      setJoining(false);
+    }
+  };
   return (
     <View style={styles.card}>
       <View style={styles.body}>
@@ -62,10 +82,12 @@ function MeetingRow({ meeting, meId }: { meeting: Meeting; meId?: number }) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel={`Join ${meeting.title}`}
-        onPress={() => Alert.alert("Join", "Joining a meeting is coming soon.")}
+        accessibilityState={{ disabled: joining, busy: joining }}
+        disabled={joining}
+        onPress={join}
         style={({ pressed }) => [styles.join, pressed && { opacity: 0.7 }]}
       >
-        <Text style={styles.joinText}>Join</Text>
+        {joining ? <ActivityIndicator color="#fff" /> : <Text style={styles.joinText}>Join</Text>}
       </Pressable>
     </View>
   );

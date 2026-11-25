@@ -1,7 +1,6 @@
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { Tabs } from "expo-router/js-tabs";
 
-import { CallProvider } from "@/calls/CallProvider";
 import { colors } from "@/theme";
 
 type IconName = keyof typeof Ionicons.glyphMap;
@@ -16,7 +15,6 @@ const TABS: { name: string; title: string; icon: IconName; iconFocused: IconName
 
 export default function TabsLayout() {
   return (
-    <CallProvider>
       <Tabs
         backBehavior="firstRoute"
         screenOptions={{
@@ -42,6 +40,5 @@ export default function TabsLayout() {
           />
         ))}
       </Tabs>
-    </CallProvider>
   );
 }

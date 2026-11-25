@@ -7,6 +7,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { fetchMe } from "@/api/auth";
 import { queryClient } from "@/api/queryClient";
+import { CallProvider } from "@/calls/CallProvider";
 import { canList, useAuth } from "@/store/auth";
 import { colors } from "@/theme";
 
@@ -29,6 +30,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
+          <CallProvider>
           <StatusBar style="light" />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
             <Stack.Screen name="index" />
@@ -47,6 +49,7 @@ export default function RootLayout() {
               <Stack.Screen name="(auth)" />
             </Stack.Protected>
           </Stack>
+          </CallProvider>
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

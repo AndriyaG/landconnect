@@ -4,7 +4,7 @@ import { BackHandler, StyleSheet, Text, Vibration, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { errorMessage } from "@/api/client";
-import { isVideoCall, otherMemberName, prepareMedia } from "@/calls/media";
+import { isVideoCall, otherMemberName, prepareMedia, reportLoggedStatus } from "@/calls/media";
 import { permissionDeniedMessage, requestCallPermissions } from "@/calls/permissions";
 import { RoundButton } from "@/components/RoundButton";
 import { colors } from "@/theme";
@@ -17,7 +17,11 @@ export function IncomingCall() {
   const [message, setMessage] = useState<string | null>(null);
 
   const reject = () => {
-    call.leave({ reject: true, reason: "decline" }).catch(() => {});
+    reportLoggedStatus(call, "rejected")
+      .catch(() => {})
+      .finally(() => {
+        call.leave({ reject: true, reason: "decline" }).catch(() => {});
+      });
   };
 
   useEffect(() => {
@@ -27,7 +31,7 @@ export function IncomingCall() {
 
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      call.leave({ reject: true, reason: "decline" }).catch(() => {});
+      reject();
       return true;
     });
     return () => sub.remove();
@@ -44,6 +48,7 @@ export function IncomingCall() {
       }
       await prepareMedia(call, video);
       await call.join();
+      await reportLoggedStatus(call, "accepted");
     } catch (e) {
       setMessage(errorMessage(e));
     } finally {

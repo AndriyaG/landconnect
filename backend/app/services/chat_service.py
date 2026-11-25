@@ -1,14 +1,33 @@
+import re
+
 from sqlalchemy import and_, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models import Block, Conversation, Message
 
+_PHONE = re.compile(r"(?<!\d)\+?(?:[\d\s().-]{9,22})\d(?!\d)")
+
 
 class ChatError(Exception):
     def __init__(self, status_code: int, detail: str):
         self.status_code = status_code
         self.detail = detail
+
+
+def mask_phone_numbers(text: str) -> str:
+    def repl(match: re.Match[str]) -> str:
+        raw = match.group(0)
+        digits = [i for i, ch in enumerate(raw) if ch.isdigit()]
+        if len(digits) < 10:
+            return raw
+        hidden = set(digits[:-2])
+        chars = list(raw)
+        for i in hidden:
+            chars[i] = "•"
+        return "".join(chars)
+
+    return _PHONE.sub(repl, text)
 
 
 def is_blocked(db: Session, a: int, b: int) -> bool:
@@ -50,7 +69,9 @@ def send_message(db: Session, conv: Conversation, sender_id: int, text: str, cli
         return existing, False
     if is_blocked(db, sender_id, conv.other(sender_id)):
         raise ChatError(403, "Messaging is blocked between these users")
-    msg = Message(conversation_id=conv.id, sender_id=sender_id, text=text, client_id=client_id)
+    msg = Message(
+        conversation_id=conv.id, sender_id=sender_id, text=mask_phone_numbers(text), client_id=client_id
+    )
     db.add(msg)
     try:
         db.commit()

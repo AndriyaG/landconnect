@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { errorMessage } from "@/api/client";
 import { fetchCallToken } from "@/calls/api";
+import { disconnectStreamClient, rememberStreamClient } from "@/calls/session";
 import type { PublicUser } from "@/store/auth";
 
 export function useStreamClient(user: PublicUser) {
@@ -22,6 +23,11 @@ export function useStreamClient(user: PublicUser) {
           token: t.token,
           tokenProvider: async () => (await fetchCallToken()).token,
         });
+        rememberStreamClient(instance);
+        if (cancelled) {
+          disconnectStreamClient();
+          return;
+        }
         setClient(instance);
       })
       .catch((e) => {
@@ -29,8 +35,7 @@ export function useStreamClient(user: PublicUser) {
       });
     return () => {
       cancelled = true;
-      instance?.disconnectUser().catch(() => {});
-      setClient(null);
+      disconnectStreamClient();
     };
   }, [user.id, user.name, attempt]);
 

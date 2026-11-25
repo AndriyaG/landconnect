@@ -9,7 +9,7 @@ from app.deps import get_current_user
 from app.models import Meeting, MeetingParticipant, User
 from app.schemas.meeting import MeetingIn, MeetingJoinOut, MeetingOut
 from app.schemas.user import PublicUser
-from app.services import call_service
+from app.services import call_service, chat_service
 
 router = APIRouter(prefix="/meetings", tags=["meetings"])
 
@@ -44,6 +44,8 @@ def create_meeting(body: MeetingIn, user: User = Depends(get_current_user), db: 
     for invitee_id in invitee_ids:
         if db.get(User, invitee_id) is None:
             raise HTTPException(status.HTTP_404_NOT_FOUND, "User not found")
+        if chat_service.is_blocked(db, user.id, invitee_id):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "blocked")
     meeting = Meeting(
         title=body.title,
         host_id=user.id,

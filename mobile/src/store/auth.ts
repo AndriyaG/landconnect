@@ -3,6 +3,7 @@ import * as SecureStore from "expo-secure-store";
 import { create } from "zustand";
 
 import { queryClient } from "@/api/queryClient";
+import { disconnectStreamClient } from "@/calls/session";
 
 export type Role = "buyer" | "seller" | "broker";
 export type PublicUser = { id: number; name: string; role: Role };
@@ -50,6 +51,7 @@ export const useAuth = create<AuthState>((set, get) => ({
     set({ user });
   },
   logout: async () => {
+    disconnectStreamClient();
     await SecureStore.deleteItemAsync(KEY).catch(() => {});
     set({ token: null, user: null });
     queryClient.clear();

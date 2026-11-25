@@ -4,8 +4,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 
 
 import { errorMessage } from "@/api/client";
 import { useCallClient } from "@/calls/CallProvider";
-import { startRingingCall } from "@/calls/media";
-import { permissionDeniedMessage, requestCallPermissions } from "@/calls/permissions";
+import { placeCall } from "@/calls/media";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import type { PublicUser } from "@/store/auth";
 import { colors } from "@/theme";
@@ -51,10 +50,9 @@ function Dialer({ client, me }: { client: StreamVideoClient; me: PublicUser }) {
     if (peer === String(me.id)) return setMessage("You can't call yourself.");
     setBusy(true);
     try {
-      if (!(await requestCallPermissions(video))) return setMessage(permissionDeniedMessage(video));
-      await startRingingCall(client, String(me.id), peer, video);
+      await placeCall(client, Number(peer), video ? "video" : "audio");
     } catch (e) {
-      setMessage(`Could not call user ${peer}. They must have signed in to the app at least once. (${errorMessage(e)})`);
+      setMessage(errorMessage(e));
     } finally {
       setBusy(false);
     }

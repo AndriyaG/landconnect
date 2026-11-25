@@ -3,19 +3,23 @@ import { useEffect } from "react";
 import { BackHandler, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-import { isVideoCall, otherMemberName } from "@/calls/media";
+import { isVideoCall, otherMemberName, reportLoggedStatus } from "@/calls/media";
 import { RoundButton } from "@/components/RoundButton";
 import { colors } from "@/theme";
 
 export function OutgoingCall() {
   const call = useCall()!;
   const cancel = () => {
-    call.leave({ reject: true, reason: "cancel" }).catch(() => {});
+    reportLoggedStatus(call, "missed")
+      .catch(() => {})
+      .finally(() => {
+        call.leave({ reject: true, reason: "cancel" }).catch(() => {});
+      });
   };
 
   useEffect(() => {
     const sub = BackHandler.addEventListener("hardwareBackPress", () => {
-      call.leave({ reject: true, reason: "cancel" }).catch(() => {});
+      cancel();
       return true;
     });
     return () => sub.remove();

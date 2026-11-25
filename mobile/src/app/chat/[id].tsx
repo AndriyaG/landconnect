@@ -27,6 +27,9 @@ import {
   type LocalMessage,
   type ServerEvent,
 } from "@/api/chat";
+import { useCallClient } from "@/calls/CallProvider";
+import { placeCall } from "@/calls/media";
+import type { CallKind } from "@/calls/api";
 import { formatChatTime } from "@/chat/time";
 import { useChatSocket } from "@/chat/useChatSocket";
 import { useAuth } from "@/store/auth";
@@ -34,10 +37,18 @@ import { colors, Screen } from "@/theme";
 
 const FAIL_AFTER_MS = 12_000;
 
+function containsPhoneNumber(text: string): boolean {
+  for (const part of text.matchAll(/\+?(?:[\d\s().-]{9,22})\d/g)) {
+    if ((part[0].match(/\d/g)?.length ?? 0) >= 10) return true;
+  }
+  return false;
+}
+
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const conversationId = Number(id);
   const me = useAuth((s) => s.user);
+  const { client } = useCallClient();
   const queryClient = useQueryClient();
   const insets = useSafeAreaInsets();
   const conversations = useQuery({ queryKey: ["conversations"], queryFn: fetchConversations });
@@ -189,6 +200,7 @@ export default function ChatScreen() {
           blockUser(conversation.other_user.id)
             .then(() => {
               queryClient.invalidateQueries({ queryKey: ["conversations"] });
+              queryClient.invalidateQueries({ queryKey: ["blocks"] });
               Alert.alert("Blocked", `${conversation.other_user.name} is blocked.`);
               router.back();
             })
@@ -196,6 +208,17 @@ export default function ChatScreen() {
         },
       },
     ]);
+  };
+
+  const startCall = (type: CallKind) => {
+    if (!conversation) return;
+    if (!client) {
+      Alert.alert("Call", "Still connecting to the call service. Try again in a moment.");
+      return;
+    }
+    placeCall(client, conversation.other_user.id, type).catch((e: unknown) =>
+      Alert.alert(type === "video" ? "Video call" : "Audio call", errorMessage(e)),
+    );
   };
 
   const data = useMemo(() => [...messages].reverse(), [messages]);
@@ -207,8 +230,8 @@ export default function ChatScreen() {
       back
       right={
         <View style={styles.actions}>
-          <HeaderIcon name="call" label="Audio call" onPress={() => Alert.alert("Audio call", "Audio calls are coming soon.")} />
-          <HeaderIcon name="videocam" label="Video call" onPress={() => Alert.alert("Video call", "Video calls are coming soon.")} />
+          <HeaderIcon name="call" label="Audio call" onPress={() => startCall("audio")} />
+          <HeaderIcon name="videocam" label="Video call" onPress={() => startCall("video")} />
           <HeaderIcon name="ellipsis-vertical" label="Chat menu" onPress={confirmBlock} />
         </View>
       }
@@ -234,24 +257,31 @@ export default function ChatScreen() {
         )}
         {!connected && <Text style={styles.status}>Reconnecting…</Text>}
         <View style={[styles.composer, { paddingBottom: keyboardOpen ? 8 : insets.bottom + 8 }]}>
-          <TextInput
-            style={styles.input}
-            value={draft}
-            onChangeText={setDraft}
-            placeholder="Message"
-            placeholderTextColor={colors.muted}
-            accessibilityLabel="Message"
-            multiline
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Send message"
-            onPress={send}
-            disabled={!draft.trim()}
-            style={[styles.send, !draft.trim() && { opacity: 0.5 }]}
-          >
-            <Ionicons name="send" size={20} color="#fff" />
-          </Pressable>
+          {containsPhoneNumber(draft) && (
+            <Text style={styles.warn} accessibilityLiveRegion="polite">
+              This looks like a phone number. It will be hidden in the chat.
+            </Text>
+          )}
+          <View style={styles.composerRow}>
+            <TextInput
+              style={styles.input}
+              value={draft}
+              onChangeText={setDraft}
+              placeholder="Message"
+              placeholderTextColor={colors.muted}
+              accessibilityLabel="Message"
+              multiline
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Send message"
+              onPress={send}
+              disabled={!draft.trim()}
+              style={[styles.send, !draft.trim() && { opacity: 0.5 }]}
+            >
+              <Ionicons name="send" size={20} color="#fff" />
+            </Pressable>
+          </View>
         </View>
       </KeyboardAvoidingView>
     </Screen>
@@ -301,14 +331,9 @@ const styles = StyleSheet.create({
   list: { padding: 12, gap: 6 },
   actions: { flexDirection: "row", alignItems: "center", gap: 16 },
   status: { textAlign: "center", color: colors.muted, fontSize: 12, paddingVertical: 4, backgroundColor: "#ECE5DD" },
-  composer: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-    gap: 8,
-    paddingHorizontal: 8,
-    paddingTop: 8,
-    backgroundColor: colors.background,
-  },
+  composer: { paddingHorizontal: 8, paddingTop: 8, backgroundColor: colors.background, gap: 6 },
+  composerRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
+  warn: { color: colors.danger, fontSize: 12, paddingHorizontal: 6 },
   input: {
     flex: 1,
     maxHeight: 120,
